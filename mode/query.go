@@ -3,8 +3,8 @@ package mode
 import (
 	"context"
 	"fmt"
-	"github.com/griesbacher/check_prometheus/helper"
-	"github.com/griesbacher/check_x"
+	"github.com/consol/check_prometheus/helper"
+	"github.com/consol/check_x"
 	"github.com/prometheus/common/model"
 	"regexp"
 	"strconv"

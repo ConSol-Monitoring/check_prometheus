@@ -1,5 +1,5 @@
-[![Circle CI](https://circleci.com/gh/Griesbacher/check_prometheus/tree/master.svg?style=svg)](https://circleci.com/gh/Griesbacher/check_prometheus/tree/master)
-[![Go Report Card](https://goreportcard.com/badge/github.com/Griesbacher/check_prometheus)](https://goreportcard.com/report/github.com/Griesbacher/check_prometheus)
+[![Circle CI](https://circleci.com/gh/ConSol/check_prometheus/tree/master.svg?style=svg)](https://circleci.com/gh/ConSol/check_prometheus/tree/master)
+[![Go Report Card](https://goreportcard.com/badge/github.com/ConSol/check_prometheus)](https://goreportcard.com/report/github.com/ConSol/check_prometheus)
 [![License: GPL v3](https://img.shields.io/badge/License-GPL%20v3-blue.svg)](http://www.gnu.org/licenses/gpl-3.0)
 
 # check_prometheus
@@ -12,7 +12,7 @@ $ check_prometheus -h
 NAME:
    check_prometheus - Checks different prometheus stats as well the data itself
    Copyright (c) 2017 Philip Griesbacher
-   https://github.com/Griesbacher/check_prometheus
+   https://github.com/ConSol/check_prometheus
 
 USAGE:
    check_prometheus [global options] command [command options] [arguments...]

@@ -1,9 +1,9 @@
 package main
 
 import (
-	"github.com/griesbacher/check_prometheus/helper"
-	"github.com/griesbacher/check_prometheus/mode"
-	"github.com/griesbacher/check_x"
+	"github.com/consol/check_prometheus/helper"
+	"github.com/consol/check_prometheus/mode"
+	"github.com/consol/check_x"
 	"github.com/urfave/cli"
 	"os"
 	"time"
@@ -30,7 +30,7 @@ func startTimeout() {
 func main() {
 	app := cli.NewApp()
 	app.Name = "check_prometheus"
-	app.Usage = "Checks different prometheus stats as well the data itself\n   Copyright (c) 2017 Philip Griesbacher\n   https://github.com/Griesbacher/check_prometheus"
+	app.Usage = "Checks different prometheus stats as well the data itself\n   Copyright (c) 2017 Philip Griesbacher\n   https://github.com/consol/check_prometheus"
 	app.Version = "0.0.1"
 	flagAddress := cli.StringFlag{
 		Name:        "address",
