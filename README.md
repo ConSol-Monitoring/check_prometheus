@@ -18,7 +18,7 @@ USAGE:
    check_prometheus [global options] command [command options] [arguments...]
 
 VERSION:
-   0.0.1
+   0.0.2
 
 COMMANDS:
      mode, m  check mode

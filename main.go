@@ -31,7 +31,7 @@ func main() {
 	app := cli.NewApp()
 	app.Name = "check_prometheus"
 	app.Usage = "Checks different prometheus stats as well the data itself\n   Copyright (c) 2017 Philip Griesbacher\n   https://github.com/consol/check_prometheus"
-	app.Version = "0.0.1"
+	app.Version = "0.0.2"
 	flagAddress := cli.StringFlag{
 		Name:        "address",
 		Usage:       "Prometheus address: Protocol + IP + Port.",
@@ -162,6 +162,6 @@ func main() {
 	}
 
 	if err := app.Run(os.Args); err != nil {
-		check_x.ErrorExit(err)
+		check_x.ExitOnError(err)
 	}
 }
