@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 	"github.com/consol/check_prometheus/helper"
-	"github.com/consol/check_x"
+	"github.com/griesbacher/check_x"
 	"github.com/prometheus/common/model"
 	"regexp"
 	"strconv"

@@ -1,5 +1,5 @@
-[![Circle CI](https://circleci.com/gh/ConSol/check_x/tree/master.svg?style=svg)](https://circleci.com/gh/ConSol/check_x/tree/master)
-[![Go Report Card](https://goreportcard.com/badge/github.com/ConSol/check_x)](https://goreportcard.com/report/github.com/ConSol/check_x)
+[![Circle CI](https://circleci.com/gh/Griesbacher/check_x/tree/master.svg?style=svg)](https://circleci.com/gh/Griesbacher/check_x/tree/master)
+[![Go Report Card](https://goreportcard.com/badge/github.com/Griesbacher/check_x)](https://goreportcard.com/report/github.com/Griesbacher/check_x)
 
 # check_x
 Go Library to write Monitoring checks for Nagios/Icinga like checks

@@ -3,7 +3,7 @@ package main
 import (
 	"github.com/consol/check_prometheus/helper"
 	"github.com/consol/check_prometheus/mode"
-	"github.com/consol/check_x"
+	"github.com/griesbacher/check_x"
 	"github.com/urfave/cli"
 	"os"
 	"time"
