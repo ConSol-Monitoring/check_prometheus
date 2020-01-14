@@ -97,7 +97,7 @@ func TargetsHealth(address, label, warning, critical string) (err error) {
 	}
 	check_x.NewPerformanceData("health_rate", healthRate).Warn(warn).Crit(crit).Min(0).Max(1)
 	check_x.NewPerformanceData("targets", sumTargets).Min(0)
-	state := check_x.Evaluator{Warning: warn, Critical: warn}.Evaluate(healthRate)
+	state := check_x.Evaluator{Warning: warn, Critical: crit}.Evaluate(healthRate)
 	check_x.LongExit(state, fmt.Sprintf("There are %d healthy and %d unhealthy targets", healthy, unhealthy), msg)
 	return
 }

@@ -46,7 +46,7 @@ func Query(address, query, warning, critical, alias, search, replace string) (er
 		helper.CheckTimestampFreshness(scalar.Timestamp)
 
 		check_x.NewPerformanceData(replaceLabel("scalar", re, replace), scalarValue).Warn(warn).Crit(crit)
-		state := check_x.Evaluator{Warning: warn, Critical: warn}.Evaluate(scalarValue)
+		state := check_x.Evaluator{Warning: warn, Critical: crit}.Evaluate(scalarValue)
 
 		resultAsString := strconv.FormatFloat(scalarValue, 'f', -1, 64)
 		if alias == "" {
@@ -62,7 +62,7 @@ func Query(address, query, warning, critical, alias, search, replace string) (er
 
 			sampleValue := float64(sample.Value)
 			check_x.NewPerformanceData(replaceLabel(model.LabelSet(sample.Metric).String(), re, replace), sampleValue).Warn(warn).Crit(crit)
-			states = append(states, check_x.Evaluator{Warning: warn, Critical: warn}.Evaluate(sampleValue))
+			states = append(states, check_x.Evaluator{Warning: warn, Critical: crit}.Evaluate(sampleValue))
 
 		}
 		return evalStates(states, alias, query)
@@ -72,7 +72,7 @@ func Query(address, query, warning, critical, alias, search, replace string) (er
 		for _, sampleStream := range matrix {
 			for _, value := range sampleStream.Values {
 				helper.CheckTimestampFreshness(value.Timestamp)
-				states = append(states, check_x.Evaluator{Warning: warn, Critical: warn}.Evaluate(float64(value.Value)))
+				states = append(states, check_x.Evaluator{Warning: warn, Critical: crit}.Evaluate(float64(value.Value)))
 			}
 		}
 		return evalStates(states, alias, query)

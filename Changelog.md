@@ -3,6 +3,8 @@
 - change to ConSol repos
 - update modul check_x
 
+## Fixes
+- Issue #2 Warning Thershold Value is used as Critical Value: also for query
 
 # 0.0.1 - 27.09.2016
 ## Features:
