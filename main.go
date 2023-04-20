@@ -1,24 +1,26 @@
 package main
 
 import (
-	"github.com/consol/check_prometheus/helper"
-	"github.com/consol/check_prometheus/mode"
-	"github.com/griesbacher/check_x"
+	"github.com/consol-monitoring/check_prometheus/helper"
+	"github.com/consol-monitoring/check_prometheus/mode"
+	"github.com/consol-monitoring/check_x"
 	"github.com/urfave/cli"
 	"os"
 	"time"
 )
 
 var (
-	address  string
-	timeout  int
-	warning  string
-	critical string
-	query    string
-	alias    string
-	search   string
-	replace  string
-	label    string
+	address           string
+	timeout           int
+	warning           string
+	critical          string
+	query             string
+	alias             string
+	search            string
+	replace           string
+	label             string
+	emptyQueryMessage string
+	emptyQueryStatus  string
 )
 
 func startTimeout() {
@@ -27,11 +29,24 @@ func startTimeout() {
 	}
 }
 
+func getStatus(state string) check_x.State {
+	switch state {
+	case "OK":
+		return check_x.OK
+	case "WARNING":
+		return check_x.Warning
+	case "CRITICAL":
+		return check_x.Critical
+	default:
+		return check_x.Unknown
+	}
+}
+
 func main() {
 	app := cli.NewApp()
 	app.Name = "check_prometheus"
-	app.Usage = "Checks different prometheus stats as well the data itself\n   Copyright (c) 2017 Philip Griesbacher\n   https://github.com/consol/check_prometheus"
-	app.Version = "0.0.2"
+	app.Usage = "Checks different prometheus stats as well the data itself\n   Copyright (c) 2017 Philip Griesbacher\n   https://github.com/Griesbacher/check_prometheus"
+	app.Version = "0.0.3"
 	flagAddress := cli.StringFlag{
 		Name:        "address",
 		Usage:       "Prometheus address: Protocol + IP + Port.",
@@ -55,8 +70,18 @@ func main() {
 	}
 	flagAlias := cli.StringFlag{
 		Name:        "a",
-		Usage:       "Alias, will replace the query within the output, if set",
+		Usage:       "Alias, will replace the query within the output, if set. You can use go text/template syntax to output label values (only for vector results).",
 		Destination: &alias,
+	}
+	flagEmptyQueryMessage := cli.StringFlag{
+		Name:        "eqm",
+		Usage:       "Message if the query returns no data.",
+		Destination: &emptyQueryMessage,
+	}
+	flagEmptyQueryStatus := cli.StringFlag{
+		Name:        "eqs",
+		Usage:       "Status if the query returns no data.",
+		Destination: &emptyQueryStatus,
 	}
 	flagLabel := cli.StringFlag{
 		Name:        "l",
@@ -105,11 +130,38 @@ func main() {
        --> OK - Query: 'up'|'prometheus'=1;;;; 'iapetos'=0;;;;
 
            check_prometheus m q -q '{handler="prometheus",quantile="0.99",job="prometheus",__name__=~"http_.*bytes"}' --search '.*__name__=\"(.*?)\".*' --replace '$1' -a 'http_in_out'
-       --> OK - Alias: 'http_in_out'|'http_request_size_bytes'=296;;;; 'http_response_size_bytes'=5554;;;;`,
+       --> OK - Alias: 'http_in_out'|'http_request_size_bytes'=296;;;; 'http_response_size_bytes'=5554;;;;
+
+	   Use Alias to generate output with label values:
+	       Assumption that your query returns a label "hostname" and "details".
+		   IMPORTANT: To be able to use the value in more advanced output formatting, we just add a label "value" with the current value to the list of labels.
+		   If the specified Alias string cannot be processed by the text/template engine, the Alias string will be printed 1:1.
+		   check_prometheus m q -a 'Hostname: {{.hostname}} - Details: {{.details}}' --search '.*' --replace 'error_state'  -q 'http_requests_total{job="prometheus"}' -w 0 -c 0
+	   --> Critical - Hostname: Server01 - Details: Error404|'error_state'=1;0;0;;
+
+	   Use Alias with an if/else clause and the use of xvalue:
+	       If xvalue is 1, we output UP, else we output DOWN
+	       check_prometheus m q --search '.*' --replace 'up' -q 'up{instance="SUPERHOST"}' -a 'Hostname: {{.hostname}} Is {{if eq .xvalue "1"}}UP{{else}}DOWN{{end}}.\n' -w 1: -c 1:
+       --> OK - Hostname: SUPERHOST Is UP.\n|'up'=1;1:;1:;;
+       
+	   List all available labels to be used with Alias:
+	       Just use -a '{{.}}' and the whole map with all labels will be printed.
+		   check_prometheus m q -q 'up{instance="SUPERHOST"}' -a '{{.}}'
+           --> OK - map[__name__:up hostname:SUPERHOST instance:SUPERHOST job:snmp mib:RittalCMC xvalue:1]|'{__name__="up", hostname="SUPERHOST", instance="SUPERHOST", job="snmp", mib="RittalCMC"}'=1;;;;
+	   
+	   Use Different Message and Status code for queries that return no data.
+		   If you have a query that only returns data in an error condition you can use this flags to return a custom message and status code.
+           check_prometheus m q -eqm 'All OK' -eqs 'OK'  -q 'http_requests_total{job="prometheus"}' -w 0 -c 0
+		   --> OK - All OK
+           Without -eqm, -eqs
+		   check_prometheus m q -q 'http_requests_total{job="prometheus"}' -w 0 -c 0
+		   --> UNKNOWN - The given States do not contain an State
+
+	   `,
 
 					Action: func(c *cli.Context) error {
 						startTimeout()
-						return mode.Query(address, query, warning, critical, alias, search, replace)
+						return mode.Query(address, query, warning, critical, alias, search, replace, emptyQueryMessage, getStatus(emptyQueryStatus))
 					},
 					Flags: []cli.Flag{
 						flagAddress,
@@ -127,6 +179,8 @@ func main() {
 							Usage:       "See search flag. If the 'search' flag is empty this flag will be ignored.",
 							Destination: &replace,
 						},
+						flagEmptyQueryMessage,
+						flagEmptyQueryStatus,
 					},
 				}, {
 					Name:        "targets_health",
@@ -162,6 +216,6 @@ func main() {
 	}
 
 	if err := app.Run(os.Args); err != nil {
-		check_x.ExitOnError(err)
+		check_x.ErrorExit(err)
 	}
 }
