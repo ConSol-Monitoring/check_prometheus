@@ -1,12 +1,14 @@
 package main
 
 import (
-	"github.com/consol-monitoring/check_prometheus/helper"
-	"github.com/consol-monitoring/check_prometheus/mode"
-	"github.com/consol-monitoring/check_x"
-	"github.com/urfave/cli"
 	"os"
 	"time"
+
+	"internal/helper"
+	"internal/mode"
+
+	"github.com/consol-monitoring/check_x"
+	"github.com/urfave/cli"
 )
 
 var (
@@ -45,7 +47,7 @@ func getStatus(state string) check_x.State {
 func main() {
 	app := cli.NewApp()
 	app.Name = "check_prometheus"
-	app.Usage = "Checks different prometheus stats as well the data itself\n   Copyright (c) 2017 Philip Griesbacher\n   https://github.com/Griesbacher/check_prometheus"
+	app.Usage = "Checks different prometheus stats as well the data itself"
 	app.Version = "0.0.3"
 	flagAddress := cli.StringFlag{
 		Name:        "address",
@@ -143,12 +145,12 @@ func main() {
 	       If xvalue is 1, we output UP, else we output DOWN
 	       check_prometheus m q --search '.*' --replace 'up' -q 'up{instance="SUPERHOST"}' -a 'Hostname: {{.hostname}} Is {{if eq .xvalue "1"}}UP{{else}}DOWN{{end}}.\n' -w 1: -c 1:
        --> OK - Hostname: SUPERHOST Is UP.\n|'up'=1;1:;1:;;
-       
+
 	   List all available labels to be used with Alias:
 	       Just use -a '{{.}}' and the whole map with all labels will be printed.
 		   check_prometheus m q -q 'up{instance="SUPERHOST"}' -a '{{.}}'
            --> OK - map[__name__:up hostname:SUPERHOST instance:SUPERHOST job:snmp mib:RittalCMC xvalue:1]|'{__name__="up", hostname="SUPERHOST", instance="SUPERHOST", job="snmp", mib="RittalCMC"}'=1;;;;
-	   
+
 	   Use Different Message and Status code for queries that return no data.
 		   If you have a query that only returns data in an error condition you can use this flags to return a custom message and status code.
            check_prometheus m q -eqm 'All OK' -eqs 'OK'  -q 'http_requests_total{job="prometheus"}' -w 0 -c 0

@@ -4,10 +4,12 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"github.com/consol/check_prometheus/helper"
-	"github.com/griesbacher/check_x"
-	"github.com/prometheus/common/model"
 	"time"
+
+	"internal/helper"
+
+	"github.com/consol-monitoring/check_x"
+	"github.com/prometheus/common/model"
 )
 
 type buildInfo struct {
@@ -31,7 +33,7 @@ func Ping(address string) (err error) {
 	}
 	query := `prometheus_build_info{job="prometheus"}`
 	startTime := time.Now()
-	result, err := apiClient.Query(context.TODO(), query, time.Now())
+	result, _, err := apiClient.Query(context.TODO(), query, time.Now())
 	endTime := time.Now()
 	if err != nil {
 		return

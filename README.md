@@ -9,8 +9,8 @@ Monitoring Plugin to check the health of a Prometheus server and its data
 .\check_prometheus -h
 NAME:
    check_prometheus - Checks different prometheus stats as well the data itself
-   Copyright (c) 2017 Philip Griesbacher
-   https://github.com/Griesbacher/check_prometheus
+   Author Philip Griesbacher
+   https://github.com/Consol-Monitoring/check_prometheus
 
 USAGE:
    check_prometheus [global options] command [command options] [arguments...]
@@ -90,12 +90,12 @@ DESCRIPTION:
          If xvalue is 1, we output UP, else we output DOWN
          check_prometheus m q --search '.*' --replace 'up' -q 'up{instance="SUPERHOST"}' -a 'Hostname: {{.hostname}} Is {{if eq .xvalue "1"}}UP{{else}}DOWN{{end}}.\n' -w 1: -c 1:
        --> OK - Hostname: SUPERHOST Is UP.\n|'up'=1;1:;1:;;
-       
+
      List all available labels to be used with Alias:
          Just use -a '{{.}}' and the whole map with all labels will be printed.
          check_prometheus m q -q 'up{instance="SUPERHOST"}' -a '{{.}}'
      --> OK - map[__name__:up hostname:SUPERHOST instance:SUPERHOST job:snmp mib:RittalCMC xvalue:1]|'{__name__="up", hostname="SUPERHOST", instance="SUPERHOST", job="snmp", mib="RittalCMC"}'=1;;;;
-     
+
      Use Different Message and Status code for queries that return no data.
        If you have a query that only returns data in an error condition you can use this flags to return a custom message and status code.
            check_prometheus m q -eqm 'All OK' -eqs 'OK'  -q 'http_requests_total{job="prometheus"}' -w 0 -c 0
@@ -104,7 +104,7 @@ DESCRIPTION:
            check_prometheus m q -q 'http_requests_total{job="prometheus"}' -w 0 -c 0
        --> UNKNOWN - The given States do not contain an State
 
-     
+
 
 OPTIONS:
    --address value  Prometheus address: Protocol + IP + Port. (default: "http://localhost:9100")

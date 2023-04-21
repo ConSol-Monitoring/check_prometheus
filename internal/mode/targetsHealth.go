@@ -3,15 +3,17 @@ package mode
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/consol/check_prometheus/helper"
-	"github.com/griesbacher/check_x"
 	"net/url"
 	"path"
 	"time"
+
+	"internal/helper"
+
+	"github.com/consol-monitoring/check_x"
 )
 
 const (
-	//DefaultLabel is used if the given label is wrong
+	// DefaultLabel is used if the given label is wrong
 	DefaultLabel = "instance"
 )
 
@@ -51,7 +53,7 @@ func getTargets(address string) (*targets, error) {
 	return &dat, nil
 }
 
-//TargetsHealth tests the health of the targets
+// TargetsHealth tests the health of the targets
 func TargetsHealth(address, label, warning, critical string) (err error) {
 	warn, err := check_x.NewThreshold(warning)
 	if err != nil {
