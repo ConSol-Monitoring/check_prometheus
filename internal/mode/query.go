@@ -51,7 +51,7 @@ func Query(address, query, warning, critical, alias, search, replace, emptyQuery
 		helper.CheckTimestampFreshness(scalar.Timestamp)
 
 		check_x.NewPerformanceData(replaceLabel("scalar", re, replace), scalarValue).Warn(warn).Crit(crit)
-		state := check_x.Evaluator{Warning: warn, Critical: warn}.Evaluate(scalarValue)
+		state := check_x.Evaluator{Warning: warn, Critical: crit}.Evaluate(scalarValue)
 
 		resultAsString := strconv.FormatFloat(scalarValue, 'f', -1, 64)
 		if alias == "" {
