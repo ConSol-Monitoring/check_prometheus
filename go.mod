@@ -1,6 +1,6 @@
 module github.com/consol-monitoring/check_prometheus
 
-go 1.19
+go 1.25
 
 replace internal/helper => ./internal/helper
 
