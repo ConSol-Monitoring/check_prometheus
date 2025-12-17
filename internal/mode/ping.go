@@ -39,7 +39,7 @@ func Ping(address string) (err error) {
 	}
 	vector := result.(model.Vector)
 	if len(vector) != 1 {
-		return fmt.Errorf("The query '%s' did not return a vector with a single entry", query)
+		return fmt.Errorf("the query '%s' did not return a vector with a single entry", query)
 	}
 	sample := vector[0]
 	helper.CheckTimestampFreshness(sample.Timestamp)
@@ -53,5 +53,6 @@ func Ping(address string) (err error) {
 	}
 	check_x.NewPerformanceData("duration", endTime.Sub(startTime).Seconds()).Unit("s").Min(0)
 	check_x.Exit(check_x.OK, fmt.Sprintf("Version: %s, Instance %s", dat.Metric.Version, dat.Metric.Instance))
+
 	return err
 }

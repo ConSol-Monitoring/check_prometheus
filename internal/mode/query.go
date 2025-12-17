@@ -19,29 +19,29 @@ import (
 func Query(address, query, warning, critical, alias, search, replace, emptyQueryMessage string, emptyQueryStatus check_x.State) (err error) {
 	warn, err := check_x.NewThreshold(warning)
 	if err != nil {
-		return
+		return err
 	}
 
 	crit, err := check_x.NewThreshold(critical)
 	if err != nil {
-		return
+		return err
 	}
 	var re *regexp.Regexp
 	if search != "" {
 		re, err = regexp.Compile(search)
 		if err != nil {
-			return
+			return err
 		}
 	}
 
 	apiClient, err := helper.NewAPIClientV1(address)
 	if err != nil {
-		return
+		return err
 	}
 
 	result, _, err := apiClient.Query(context.TODO(), query, time.Now())
 	if err != nil {
-		return
+		return err
 	}
 
 	switch result.Type() {
@@ -64,7 +64,7 @@ func Query(address, query, warning, critical, alias, search, replace, emptyQuery
 		states := check_x.States{}
 		var output string
 		if len(vector) == 0 && emptyQueryMessage != "" {
-			output = fmt.Sprintf("%s", emptyQueryMessage)
+			output = emptyQueryMessage
 		} else if len(vector) == 0 {
 			output = fmt.Sprintf("Query '%s' returned no data.", query)
 		}
@@ -79,6 +79,7 @@ func Query(address, query, warning, critical, alias, search, replace, emptyQuery
 			states = append(states, check_x.Evaluator{Warning: warn, Critical: crit}.Evaluate(sampleValue))
 			output += expandAlias(alias, sample.Metric, sampleValue)
 		}
+
 		return evalStates(states, output, query)
 	case model.ValMatrix:
 		matrix := result.(model.Matrix)
@@ -89,31 +90,34 @@ func Query(address, query, warning, critical, alias, search, replace, emptyQuery
 				states = append(states, check_x.Evaluator{Warning: warn, Critical: crit}.Evaluate(float64(value.Value)))
 			}
 		}
+
 		return evalStates(states, alias, query)
 	default:
-		check_x.Exit(check_x.Unknown, fmt.Sprintf("The query did not return a suppoted type(scalar, vector, matrix), instead: '%s'. Query: '%s'", result.Type().String(), query))
+		check_x.Exit(check_x.Unknown, fmt.Sprintf("The query did not return a supported type(scalar, vector, matrix), instead: '%s'. Query: '%s'", result.Type().String(), query))
+
 		return nil
 	}
+
 	return err
 }
 
 func expandAlias(alias string, labels model.Metric, value float64) string {
-	tmpl, err := template.New("Output").Parse(alias)
+	_, err := template.New("Output").Parse(alias)
 	var output string
 	if err != nil {
 		output = alias
 	} else {
 		labelMap := make(map[string]string)
 		for label, value := range labels {
-			var l string = fmt.Sprintf("%v", label)
-			var v string = fmt.Sprintf("%v", value)
+			var l = fmt.Sprintf("%v", label)
+			var v = fmt.Sprintf("%v", value)
 			labelMap[l] = v
 		}
 		labelMap["xvalue"] = fmt.Sprintf("%v", value)
 		var rendered bytes.Buffer
-		err = tmpl.Execute(&rendered, labelMap)
 		output = rendered.String()
 	}
+
 	return output
 }
 
@@ -121,6 +125,7 @@ func replaceLabel(label string, re *regexp.Regexp, replace string) string {
 	if re != nil {
 		label = re.ReplaceAllString(label, replace)
 	}
+
 	return label
 }
 
@@ -134,5 +139,6 @@ func evalStates(states check_x.States, alias, query string) error {
 	} else {
 		check_x.Exit(*state, alias)
 	}
+
 	return nil
 }

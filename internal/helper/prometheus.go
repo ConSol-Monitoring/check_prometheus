@@ -2,7 +2,7 @@ package helper
 
 import (
 	"fmt"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"time"
 
@@ -29,7 +29,7 @@ func DoAPIRequest(address string) ([]byte, error) {
 	if err != nil {
 		return nil, err
 	}
-	body, err := ioutil.ReadAll(resp.Body)
+	body, err := io.ReadAll(resp.Body)
 	if err != nil {
 		return nil, err
 	}
@@ -49,7 +49,7 @@ func CheckTimeFreshness(timestamp time.Time) {
 	if TimestampFreshness == 0 {
 		return
 	}
-	timeDiff := time.Now().Sub(timestamp)
+	timeDiff := time.Since(timestamp)
 	if int(timeDiff.Seconds()) > TimestampFreshness {
 		check_x.Exit(check_x.Unknown, fmt.Sprintf("One of the scraped data exceed the freshness by %ds", int(timeDiff.Seconds())-TimestampFreshness))
 	}

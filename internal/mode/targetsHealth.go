@@ -50,6 +50,7 @@ func getTargets(address string) (*targets, error) {
 	if err = json.Unmarshal(jsonBytes, &dat); err != nil {
 		return nil, err
 	}
+
 	return &dat, nil
 }
 
@@ -57,20 +58,20 @@ func getTargets(address string) (*targets, error) {
 func TargetsHealth(address, label, warning, critical string) (err error) {
 	warn, err := check_x.NewThreshold(warning)
 	if err != nil {
-		return
+		return err
 	}
 
 	crit, err := check_x.NewThreshold(critical)
 	if err != nil {
-		return
+		return err
 	}
 
 	targets, err := getTargets(address)
 	if err != nil {
-		return
+		return err
 	}
 	if (*targets).Status != "success" {
-		return fmt.Errorf("The API target returnstatus was %s", (*targets).Status)
+		return fmt.Errorf("the API target returnstatus was %s", (*targets).Status)
 	}
 	msg := ""
 	healthy := 0
@@ -101,5 +102,6 @@ func TargetsHealth(address, label, warning, critical string) (err error) {
 	check_x.NewPerformanceData("targets", sumTargets).Min(0)
 	state := check_x.Evaluator{Warning: warn, Critical: crit}.Evaluate(healthRate)
 	check_x.LongExit(state, fmt.Sprintf("There are %d healthy and %d unhealthy targets", healthy, unhealthy), msg)
-	return
+
+	return err
 }
