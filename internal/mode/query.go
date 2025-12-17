@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"fmt"
+	"net/url"
 	"regexp"
 	"strconv"
 	"text/template"
@@ -16,7 +17,7 @@ import (
 )
 
 // Query allows the user to test data in the prometheus server
-func Query(address, query, warning, critical, alias, search, replace, emptyQueryMessage string, emptyQueryStatus check_x.State) (err error) {
+func Query(address *url.URL, query, warning, critical, alias, search, replace, emptyQueryMessage string, emptyQueryStatus check_x.State) (err error) {
 	warn, err := check_x.NewThreshold(warning)
 	if err != nil {
 		return err

@@ -36,13 +36,13 @@ type targets struct {
 	} `json:"data"`
 }
 
-func getTargets(address string) (*targets, error) {
-	u, err := url.Parse(address)
+func getTargets(address *url.URL) (*targets, error) {
+	u, err := url.Parse(address.String())
 	if err != nil {
 		return nil, err
 	}
 	u.Path = path.Join(u.Path, "/api/v1/targets")
-	jsonBytes, err := helper.DoAPIRequest(u.String())
+	jsonBytes, err := helper.DoAPIRequest(u)
 	if err != nil {
 		return nil, err
 	}
@@ -55,7 +55,7 @@ func getTargets(address string) (*targets, error) {
 }
 
 // TargetsHealth tests the health of the targets
-func TargetsHealth(address, label, warning, critical string) (err error) {
+func TargetsHealth(address *url.URL, label, warning, critical string) (err error) {
 	warn, err := check_x.NewThreshold(warning)
 	if err != nil {
 		return err

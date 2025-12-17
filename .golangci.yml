@@ -7,8 +7,9 @@ linters:
         - performance
         - style
         - experimental
-    gomoddirectives:
-      replace-local: true
+        - security
+        - opinionated
+        - diagnostic
     lll:
       line-length: 200
   exclusions:

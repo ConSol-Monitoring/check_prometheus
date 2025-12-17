@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"net/url"
 	"time"
 
 	"github.com/consol-monitoring/check_prometheus/internal/helper"
@@ -25,7 +26,7 @@ type buildInfo struct {
 }
 
 // Ping will fetch build information from the prometheus server
-func Ping(address string) (err error) {
+func Ping(address *url.URL) (err error) {
 	apiClient, err := helper.NewAPIClientV1(address)
 	if err != nil {
 		return
