@@ -4,8 +4,8 @@ import (
 	"os"
 	"time"
 
-	"internal/helper"
-	"internal/mode"
+	"github.com/consol-monitoring/check_prometheus/internal/helper"
+	"github.com/consol-monitoring/check_prometheus/internal/mode"
 
 	"github.com/consol-monitoring/check_x"
 	"github.com/urfave/cli"

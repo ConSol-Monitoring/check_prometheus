@@ -6,8 +6,7 @@ import (
 	"fmt"
 	"time"
 
-	"internal/helper"
-
+	"github.com/consol-monitoring/check_prometheus/internal/helper"
 	"github.com/consol-monitoring/check_x"
 	"github.com/prometheus/common/model"
 )
