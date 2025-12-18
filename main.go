@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"encoding/base64"
 	"fmt"
 	"net/http"
 	"net/url"
@@ -16,12 +17,22 @@ import (
 	"github.com/urfave/cli/v3"
 )
 
+type QueryEncoding int
+
+const (
+	Raw QueryEncoding = iota
+	Base64
+	Url
+)
+
 var (
 	address           *url.URL
 	timeout           int64
 	warning           string
 	critical          string
 	query             string
+	queryDecoded      string
+	queryEncoding     QueryEncoding
 	alias             string
 	search            string
 	replace           string
@@ -170,7 +181,7 @@ func main() {
 										`,
 						Action: func(c context.Context, cmd *cli.Command) error {
 							startTimeout()
-							return mode.Query(address, query, warning, critical, alias, search, replace, emptyQueryMessage, getStatus(emptyQueryStatus))
+							return mode.Query(address, queryDecoded, warning, critical, alias, search, replace, emptyQueryMessage, getStatus(emptyQueryStatus))
 						},
 						Flags: []cli.Flag{
 							&cli.StringFlag{
@@ -194,6 +205,11 @@ func main() {
 								Name:        "q",
 								Usage:       "Query to be executed",
 								Destination: &query,
+								Action: func(ctx context.Context, cmd *cli.Command, value string) error {
+									query = value
+									queryDecoded = value
+									return nil
+								},
 							},
 							&cli.StringFlag{
 								Name:        "a",
@@ -271,6 +287,53 @@ func main() {
 								Name:        "eqs",
 								Usage:       "Status if the query returns no data.",
 								Destination: &emptyQueryStatus,
+							},
+							&cli.StringFlag{
+								Name:  "query-encoding",
+								Value: "raw",
+								Usage: "Query encoding if query is given in encoded form. Supports 'raw', 'base64' and 'url' type encodings. Specify this parameter after the query.",
+								Action: func(ctx context.Context, cmd *cli.Command, value string) error {
+									if query == "" {
+										return fmt.Errorf("query argument is empty, specify query-encoding after specifying query")
+									}
+									switch strings.ToLower(value) {
+									case "raw":
+										queryEncoding = Raw
+										queryDecoded = query
+									case "base64":
+										queryEncoding = Base64
+										bytes, err := base64.StdEncoding.DecodeString(query)
+										if err != nil {
+											return fmt.Errorf("base64 query decoding failed with error: %s", err.Error())
+										}
+										queryDecoded = string(bytes)
+									case "url":
+										queryEncoding = Url
+										var err error
+										queryDecoded, err = url.QueryUnescape(query)
+										if err != nil {
+											return fmt.Errorf("url query decoding failed with error: %s", err.Error())
+										}
+										return nil
+									default:
+										return fmt.Errorf("unknown query encoding, available values are 'raw', 'base64', 'url'")
+									}
+									return nil
+								},
+								Validator: func(value string) error {
+									switch strings.ToLower(value) {
+									case "raw":
+										queryEncoding = Raw
+									case "base64":
+										queryEncoding = Base64
+									case "url":
+										queryEncoding = Url
+									default:
+										return fmt.Errorf("unknown query encoding, available values are 'raw', 'base64', 'url'")
+									}
+									return nil
+								},
+								ValidateDefaults: true,
 							},
 						},
 					},

@@ -129,5 +129,47 @@
                 "--insecure"
             ]
         },
+        {
+            "name": "Launch Package 8",
+            "type": "go",
+            "request": "launch",
+            "mode": "auto",
+            "program": "${workspaceFolder}",
+            "args": [
+                "-t",
+                "99999",
+                "--verbose",
+                "mode",
+                "query",
+                "--address",
+                "http://localhost:9090/",
+                "-q",
+                "aW5jcmVhc2UoYXBwbGljYXRpb25fYXVmdHJhZ19zdGF0dXNfY291bnR7ZW52aXJvbm1lbnQ9InByb2QiLHN1YnR5cGU9IjIwMjIiLHN0YXR1c0lkIT0iMyJ9WzI0aF0p",
+                "--query-encoding",
+                "base64",
+                "--insecure"
+            ]
+        },
+        {
+            "name": "Launch Package 9",
+            "type": "go",
+            "request": "launch",
+            "mode": "auto",
+            "program": "${workspaceFolder}",
+            "args": [
+                "-t",
+                "99999",
+                "--verbose",
+                "mode",
+                "query",
+                "--address",
+                "http://localhost:9090/",
+                "-q",
+                "increase%28application_auftrag_status_count%7Benvironment%3D%22prod%22%2Csubtype%3D%222022%22%2CstatusId%21%3D%223%22%7D%5B24h%5D%29",
+                "--query-encoding",
+                "url",
+                "--insecure"
+            ]
+        },
     ]
 }
