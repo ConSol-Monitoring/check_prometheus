@@ -24,13 +24,19 @@ var InsecureSkipVerify bool
 // Cookies parsed into []*http.Cookie
 var Cookies []*http.Cookie
 
+// Verbose flag writes to here
+var Verbose bool
+
 type prometheusInterceptor struct {
 	next http.RoundTripper
 }
 
 func (i *prometheusInterceptor) RoundTrip(req *http.Request) (*http.Response, error) {
-	// 1. You can log the body here to see exactly what is being sent
-	fmt.Printf("Sending %s request to %s\n", req.Method, req.URL.String())
+	if Verbose {
+		fmt.Printf("Sending %s request to %s\n", req.Method, req.URL.String())
+		fmt.Printf("Request:\n%+v\n", req)
+		fmt.Printf("Url:\n%+v\n", req.URL)
+	}
 
 	// 2. Ensure the Content-Type is definitely set
 	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")

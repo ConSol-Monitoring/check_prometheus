@@ -110,5 +110,24 @@
                 "--insecure"
             ]
         },
+        {
+            "name": "Launch Package 7",
+            "type": "go",
+            "request": "launch",
+            "mode": "auto",
+            "program": "${workspaceFolder}",
+            "args": [
+                "-t",
+                "99999",
+                "--verbose",
+                "mode",
+                "query",
+                "--address",
+                "http://localhost:9090/",
+                "-q",
+                "up",
+                "--insecure"
+            ]
+        },
     ]
 }

@@ -69,6 +69,15 @@ func main() {
 				Value:       300,
 				Destination: &helper.TimestampFreshness,
 			},
+			&cli.BoolFlag{
+				Name:  "verbose",
+				Usage: "Turn the verbose mode on.",
+				Value: false,
+				Action: func(ctx context.Context, cmd *cli.Command, value bool) error {
+					helper.Verbose = value
+					return nil
+				},
+			},
 		},
 		Commands: []*cli.Command{
 			{
