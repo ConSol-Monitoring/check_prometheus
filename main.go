@@ -64,7 +64,7 @@ func main() {
 	cmd := &cli.Command{
 		Name:    "check_prometheus",
 		Usage:   "Checks different prometheus stats as well the data itself",
-		Version: "0.0.3",
+		Version: "0.0.4",
 		Flags: []cli.Flag{
 			&cli.Int64Flag{
 				Name:        "timeout",
