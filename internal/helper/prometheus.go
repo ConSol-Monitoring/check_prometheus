@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"net/http/cookiejar"
 	"net/url"
+	"strings"
 	"time"
 
 	"github.com/consol-monitoring/check_x"
@@ -36,6 +37,21 @@ func (i *prometheusInterceptor) RoundTrip(req *http.Request) (*http.Response, er
 		fmt.Printf("Sending %s request to %s\n", req.Method, req.URL.String())
 		fmt.Printf("Request:\n%+v\n", req)
 		fmt.Printf("Url:\n%+v\n", req.URL)
+		fmt.Printf("Header:\n%+v\n", req.Header)
+
+		// Read and print the body content
+		if req.Body != nil {
+			bodyBytes, err := io.ReadAll(req.Body)
+			if err != nil {
+				fmt.Printf("Error reading body: %v\n", err)
+			} else {
+				fmt.Printf("Body:\n%s\n", string(bodyBytes))
+				// Restore the body for further processing
+				req.Body = io.NopCloser(strings.NewReader(string(bodyBytes)))
+			}
+		} else {
+			fmt.Printf("Body is empty\n")
+		}
 	}
 
 	// 2. Ensure the Content-Type is definitely set
