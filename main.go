@@ -3,7 +3,7 @@ package main
 import (
 	"os"
 
-	"github.com/consol-monitoring/check_prometheus/internal/checker"
+	"github.com/consol-monitoring/check_prometheus/checker"
 )
 
 func main() {
