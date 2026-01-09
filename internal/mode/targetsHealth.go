@@ -24,6 +24,7 @@ type targets struct {
 			DiscoveredLabels struct {
 				Address     string `json:"__address__"`
 				MetricsPath string `json:"__metrics_path__"`
+				Scheme      string `json:"__scheme__"`
 				Job         string `json:"job"`
 			} `json:"discoveredLabels"`
 			Labels     map[string]string `json:"labels"`
