@@ -7,7 +7,7 @@ import (
 	"path"
 	"time"
 
-	"internal/helper"
+	"github.com/consol-monitoring/check_prometheus/internal/helper"
 
 	"github.com/consol-monitoring/check_x"
 )
@@ -36,13 +36,13 @@ type targets struct {
 	} `json:"data"`
 }
 
-func getTargets(address string) (*targets, error) {
-	u, err := url.Parse(address)
+func getTargets(address *url.URL) (*targets, error) {
+	u, err := url.Parse(address.String())
 	if err != nil {
 		return nil, err
 	}
 	u.Path = path.Join(u.Path, "/api/v1/targets")
-	jsonBytes, err := helper.DoAPIRequest(u.String())
+	jsonBytes, err := helper.DoAPIRequest(u)
 	if err != nil {
 		return nil, err
 	}
@@ -50,27 +50,40 @@ func getTargets(address string) (*targets, error) {
 	if err = json.Unmarshal(jsonBytes, &dat); err != nil {
 		return nil, err
 	}
+
 	return &dat, nil
 }
 
 // TargetsHealth tests the health of the targets
-func TargetsHealth(address, label, warning, critical string) (err error) {
-	warn, err := check_x.NewThreshold(warning)
-	if err != nil {
-		return
+func TargetsHealth(address *url.URL, label, warning, critical string, collection *check_x.PerformanceDataCollection) (check_x.State, string, error) {
+	if address == nil {
+		err := fmt.Errorf("address to query is null")
+		return check_x.Unknown, fmt.Sprintf("Error: %s", err.Error()), err
 	}
 
-	crit, err := check_x.NewThreshold(critical)
+	if collection == nil {
+		err := fmt.Errorf("collection to store perf data is null")
+		return check_x.Unknown, fmt.Sprintf("Error: %s", err.Error()), err
+	}
+
+	warnThreshold, err := check_x.NewThreshold(warning)
 	if err != nil {
-		return
+		return check_x.Unknown, fmt.Sprintf("Error creating warningThreshold from '%s' : %s", warning, err.Error()), err
+	}
+
+	critThreshold, err := check_x.NewThreshold(critical)
+	if err != nil {
+		return check_x.Unknown, fmt.Sprintf("Error creating critThreshold from '%s' : %s", critical, err.Error()), err
 	}
 
 	targets, err := getTargets(address)
 	if err != nil {
-		return
+		return check_x.Unknown, fmt.Sprintf("Error getting targets out of address: %s : %s", address.String(), err.Error()), err
 	}
+
 	if (*targets).Status != "success" {
-		return fmt.Errorf("The API target returnstatus was %s", (*targets).Status)
+		err := fmt.Errorf("the API target return status was %s", (*targets).Status)
+		return check_x.Unknown, err.Error(), err
 	}
 	msg := ""
 	healthy := 0
@@ -85,9 +98,9 @@ func TargetsHealth(address, label, warning, critical string) (err error) {
 			healthy += 1
 		}
 		if val, ok := target.Labels[label]; ok {
-			check_x.NewPerformanceData(val, health)
+			collection.AddPerformanceDataFloat64(val, health)
 		} else {
-			check_x.NewPerformanceData(target.Labels[DefaultLabel], health)
+			collection.AddPerformanceDataFloat64(target.Labels[DefaultLabel], health)
 		}
 	}
 	var healthRate float64
@@ -97,9 +110,16 @@ func TargetsHealth(address, label, warning, critical string) (err error) {
 	} else {
 		healthRate = float64(healthy) / sumTargets
 	}
-	check_x.NewPerformanceData("health_rate", healthRate).Warn(warn).Crit(crit).Min(0).Max(1)
-	check_x.NewPerformanceData("targets", sumTargets).Min(0)
-	state := check_x.Evaluator{Warning: warn, Critical: crit}.Evaluate(healthRate)
-	check_x.LongExit(state, fmt.Sprintf("There are %d healthy and %d unhealthy targets", healthy, unhealthy), msg)
-	return
+
+	collection.AddPerformanceDataFloat64("health_rate", healthRate)
+	collection.Warn("health_rate", warnThreshold)
+	collection.Crit("health_rate", critThreshold)
+	collection.Min("health_rate", 0)
+	collection.Max("health_rate", 1)
+	collection.AddPerformanceDataFloat64("targets", sumTargets)
+	collection.Min("targets", 0)
+
+	state := check_x.Evaluator{Warning: warnThreshold, Critical: critThreshold}.Evaluate(healthRate)
+
+	return state, fmt.Sprintf("There are %d healthy and %d unhealthy targets", healthy, unhealthy), nil
 }
