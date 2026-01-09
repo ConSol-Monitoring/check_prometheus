@@ -16,28 +16,29 @@ import (
 	"github.com/urfave/cli/v3"
 )
 
-type QueryEncoding int
+type QueryEncodingEnum int
 
 const (
-	Raw QueryEncoding = iota
+	Raw QueryEncodingEnum = iota
 	Base64
 	Url
 )
 
 var (
-	address           *url.URL
-	timeout           int64
-	warning           string
-	critical          string
-	query             string
-	queryDecoded      string
-	queryEncoding     QueryEncoding
-	alias             string
-	search            string
-	replace           string
-	label             string
-	emptyQueryMessage string
-	emptyQueryStatus  string
+	address             *url.URL
+	timeout             int64
+	warning             string
+	critical            string
+	query               string
+	queryDecoded        string
+	queryEncoding       QueryEncodingEnum
+	alias               string
+	search              string
+	replace             string
+	label               string
+	emptyQueryMessage   string
+	emptyQueryStatusArg string
+	emptyQueryStatus    check_x.State
 )
 
 func startTimeout() {
@@ -46,20 +47,35 @@ func startTimeout() {
 	}
 }
 
-func getStatus(state string) check_x.State {
-	switch state {
-	case "OK":
-		return check_x.OK
-	case "WARNING":
-		return check_x.Warning
-	case "CRITICAL":
-		return check_x.Critical
-	default:
-		return check_x.Unknown
+// This function is intended to be used for single-use cli mode
+// It will be called from main executable function as it returns int
+func CheckMain(args []string) int {
+
+	state, msg, collection, _ := Check(args)
+
+	print(GenerateStdout(state, msg, collection))
+
+	return state.Code
+}
+
+// This function can be used to generate a Naemon-Conformant stdout out of Check result
+func GenerateStdout(state check_x.State, msg string, collection *check_x.PerformanceDataCollection) string {
+	if perf := collection.PrintAllPerformanceData(); perf == "" {
+		return fmt.Sprintf("%s - %s\n", state.Name, msg)
+	} else {
+		return fmt.Sprintf("%s - %s|%s\n", state.Name, msg, perf)
 	}
 }
 
-func Check(args []string) int {
+// This function is indended to parse a check_prometheus cli query and return the state error etc
+// It can be used as a library import
+func Check(args []string) (check_x.State, string, *check_x.PerformanceDataCollection, error) {
+
+	var state check_x.State
+	var msg string
+	var collection = check_x.NewPerformanceDataCollection()
+	var err error
+
 	cmd := &cli.Command{
 		Name:    "check_prometheus",
 		Usage:   "Checks different prometheus stats as well the data itself",
@@ -103,7 +119,8 @@ func Check(args []string) int {
 						Description: `This check requires that the prometheus server itself is listed as target. Following query will be used: 'prometheus_build_info{job="prometheus"}'`,
 						Action: func(ctx context.Context, cmd *cli.Command) error {
 							startTimeout()
-							return mode.Ping(address)
+							state, msg, err = mode.Ping(address, &collection)
+							return err
 						},
 						Flags: []cli.Flag{
 							&cli.StringFlag{
@@ -112,9 +129,7 @@ func Check(args []string) int {
 								Value: "http://localhost:9100",
 								Action: func(ctx context.Context, cmd *cli.Command, value string) error {
 									url, err := url.Parse(value)
-									if err != nil {
-										address = url
-									}
+									address = url
 									return err
 								},
 								Validator: func(value string) error {
@@ -180,7 +195,8 @@ func Check(args []string) int {
 										`,
 						Action: func(c context.Context, cmd *cli.Command) error {
 							startTimeout()
-							return mode.Query(address, queryDecoded, warning, critical, alias, search, replace, emptyQueryMessage, getStatus(emptyQueryStatus))
+							state, msg, err = mode.Query(address, queryDecoded, warning, critical, alias, search, replace, emptyQueryMessage, emptyQueryStatus, &collection)
+							return err
 						},
 						Flags: []cli.Flag{
 							&cli.StringFlag{
@@ -189,9 +205,7 @@ func Check(args []string) int {
 								Value: "http://localhost:9100",
 								Action: func(ctx context.Context, cmd *cli.Command, value string) error {
 									url, err := url.Parse(value)
-									if err == nil {
-										address = url
-									}
+									address = url
 									return err
 								},
 								Validator: func(value string) error {
@@ -285,7 +299,11 @@ func Check(args []string) int {
 							&cli.StringFlag{
 								Name:        "eqs",
 								Usage:       "Status if the query returns no data.",
-								Destination: &emptyQueryStatus,
+								Destination: &emptyQueryStatusArg,
+								Action: func(ctx context.Context, cmd *cli.Command, value string) error {
+									emptyQueryStatus = check_x.StateFromString(value)
+									return nil
+								},
 							},
 							&cli.StringFlag{
 								Name:  "query-encoding",
@@ -344,7 +362,8 @@ func Check(args []string) int {
 						Description: `The warning and critical thresholds are appied on the health_rate. The health_rate is calculted: sum(healthy) / sum(targets).`,
 						Action: func(c context.Context, cmd *cli.Command) error {
 							startTimeout()
-							return mode.TargetsHealth(address, label, warning, critical)
+							state, msg, err = mode.TargetsHealth(address, label, warning, critical, &collection)
+							return err
 						},
 						Flags: []cli.Flag{
 							&cli.StringFlag{
@@ -353,9 +372,7 @@ func Check(args []string) int {
 								Value: "http://localhost:9100",
 								Action: func(ctx context.Context, cmd *cli.Command, value string) error {
 									url, err := url.Parse(value)
-									if err != nil {
-										address = url
-									}
+									address = url
 									return err
 								},
 								Validator: func(value string) error {
@@ -388,8 +405,8 @@ func Check(args []string) int {
 	}
 
 	if err := cmd.Run(context.Background(), args); err != nil {
-		check_x.ErrorExit(err)
+		return check_x.Unknown, fmt.Sprintf("Error when executing cli action : %s", err.Error()), &collection, err
 	}
 
-	return 0
+	return state, msg, &collection, err
 }

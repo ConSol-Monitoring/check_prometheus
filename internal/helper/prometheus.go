@@ -10,7 +10,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/consol-monitoring/check_x"
 	"github.com/prometheus/client_golang/api"
 	v1 "github.com/prometheus/client_golang/api/prometheus/v1"
 	"github.com/prometheus/common/model"
@@ -32,6 +31,7 @@ type prometheusInterceptor struct {
 	next http.RoundTripper
 }
 
+// Interceptor function used in verbose mode
 func (i *prometheusInterceptor) RoundTrip(req *http.Request) (*http.Response, error) {
 	if Verbose {
 		fmt.Printf("Sending %s request to %s\n", req.Method, req.URL.String())
@@ -54,13 +54,8 @@ func (i *prometheusInterceptor) RoundTrip(req *http.Request) (*http.Response, er
 		}
 	}
 
-	// 2. Ensure the Content-Type is definitely set
+	// 2. Ensure the Content-Type is set
 	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
-
-	// 3. Fix potential Idempotency-Key issues by removing it if it's nil
-	// if val, ok := req.Header["Idempotency-Key"]; ok && val == nil {
-	// 	delete(req.Header, "Idempotency-Key")
-	// }
 
 	return i.next.RoundTrip(req)
 }
@@ -127,17 +122,18 @@ func DoAPIRequest(url *url.URL) ([]byte, error) {
 }
 
 // CheckTimestampFreshness tests if the data is still valid
-func CheckTimestampFreshness(timestamp model.Time) {
-	CheckTimeFreshness(time.Unix(int64(timestamp), 0))
+func CheckTimestampFreshness(timestamp model.Time) error {
+	return CheckTimeFreshness(time.Unix(int64(timestamp), 0))
 }
 
 // CheckTimeFreshness tests if the data is still valid
-func CheckTimeFreshness(timestamp time.Time) {
+func CheckTimeFreshness(timestamp time.Time) error {
 	if TimestampFreshness == 0 {
-		return
+		return fmt.Errorf("error when checking time freshness, timestampFreshness is zero")
 	}
 	timeDiff := time.Since(timestamp)
 	if int(timeDiff.Seconds()) > TimestampFreshness {
-		check_x.Exit(check_x.Unknown, fmt.Sprintf("One of the scraped data exceed the freshness by %ds", int(timeDiff.Seconds())-TimestampFreshness))
+		return fmt.Errorf("one of the scraped data exceed the freshness by %ds", int(timeDiff.Seconds())-TimestampFreshness)
 	}
+	return nil
 }

@@ -5,17 +5,6 @@
     "version": "0.2.0",
     "configurations": [
         {
-            "name": "Launch Package 1",
-            "type": "go",
-            "request": "launch",
-            "mode": "auto",
-            "program": "${workspaceFolder}",
-            "args": [
-                "query",
-                "--help"
-            ]
-        },
-        {
             "name": "Launch Package 2",
             "type": "go",
             "request": "launch",
@@ -169,6 +158,70 @@
                 "--query-encoding",
                 "url",
                 "--insecure"
+            ]
+        },
+        {
+            "name": "Launch Package 10",
+            "type": "go",
+            "request": "launch",
+            "mode": "auto",
+            "program": "${workspaceFolder}",
+            "args": [
+                "-t",
+                "99999",
+                "--verbose",
+                "mode",
+                "targets_health",
+                "--address",
+                "http://localhost:9090/",
+                "-w",
+                "0.9",
+                "-c",
+                "0.5"
+            ]
+        },
+        {
+            "name": "Launch Package 11",
+            "type": "go",
+            "request": "launch",
+            "mode": "auto",
+            "program": "${workspaceFolder}",
+            "args": [
+                "t",
+                "99999",
+                "--verbose",
+                "mode",
+                "query",
+                "--address",
+                "http://localhost:9090/",
+                "-q",
+                "prometheus_http_requests_total{handler=\"/metrics\"}",
+                "-a",
+                "The handler {{.handler}} has received {{.xvalue}} requests."
+            ]
+        },
+        {
+            "name": "Failing launch 1",
+            "type": "go",
+            "request": "launch",
+            "mode": "auto",
+            "program": "${workspaceFolder}",
+            "args": [
+                "m",
+                "q",
+            ]
+        },
+        {
+            "name": "Failing launch 2",
+            "type": "go",
+            "request": "launch",
+            "mode": "auto",
+            "program": "${workspaceFolder}",
+            "args": [
+                "mode",
+                "ping",
+                "--address",
+                "http://localhost:9090/",
             ]
         },
     ]

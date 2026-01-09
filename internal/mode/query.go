@@ -17,48 +17,63 @@ import (
 )
 
 // Query allows the user to test data in the prometheus server
-func Query(address *url.URL, query, warning, critical, alias, search, replace, emptyQueryMessage string, emptyQueryStatus check_x.State) (err error) {
-	warn, err := check_x.NewThreshold(warning)
-	if err != nil {
-		return err
+func Query(address *url.URL, query, warning, critical, alias, search, replace, emptyQueryMessage string, emptyQueryStatus check_x.State, collection *check_x.PerformanceDataCollection) (check_x.State, string, error) {
+	if address == nil {
+		err := fmt.Errorf("address to query is null")
+		return check_x.Unknown, fmt.Sprintf("Error: %s", err.Error()), err
 	}
 
-	crit, err := check_x.NewThreshold(critical)
-	if err != nil {
-		return err
+	if collection == nil {
+		err := fmt.Errorf("collection to store perf data is null")
+		return check_x.Unknown, fmt.Sprintf("Error: %s", err.Error()), err
 	}
+
+	warnThreshold, err := check_x.NewThreshold(warning)
+	if err != nil {
+		return check_x.Unknown, fmt.Sprintf("Error creating warningThreshold from '%s' : %s", warning, err.Error()), err
+	}
+
+	critThreshold, err := check_x.NewThreshold(critical)
+	if err != nil {
+		return check_x.Unknown, fmt.Sprintf("Error creating critThreshold from '%s' : %s", critical, err.Error()), err
+	}
+
 	var re *regexp.Regexp
 	if search != "" {
 		re, err = regexp.Compile(search)
 		if err != nil {
-			return err
+			return check_x.Unknown, fmt.Sprintf("Error creating regex from '%s' : %s", search, err.Error()), err
 		}
 	}
 
 	apiClient, err := helper.NewAPIClientV1(address)
 	if err != nil {
-		return err
+		return check_x.Unknown, fmt.Sprintf("Error creating apiClient: %s", err.Error()), err
 	}
 
 	result, _, err := apiClient.Query(context.TODO(), query, time.Now())
 	if err != nil {
-		return err
+		return check_x.Unknown, fmt.Sprintf("Error when querying: %s", err.Error()), err
 	}
 
 	switch result.Type() {
 	case model.ValScalar:
 		scalar := result.(*model.Scalar)
 		scalarValue := float64(scalar.Value)
-		helper.CheckTimestampFreshness(scalar.Timestamp)
+		if err := helper.CheckTimestampFreshness(scalar.Timestamp); err != nil {
+			return check_x.Unknown, fmt.Sprintf("Error when checking scalar timestamp freshness: %s", err.Error()), err
+		}
 
-		check_x.NewPerformanceData(replaceLabel("scalar", re, replace), scalarValue).Warn(warn).Crit(crit)
-		state := check_x.Evaluator{Warning: warn, Critical: crit}.Evaluate(scalarValue)
+		collection.AddPerformanceDataFloat64(replaceLabel("scalar", re, replace), scalarValue)
+		collection.Warn("scalar", warnThreshold)
+		collection.Crit("scalar", critThreshold)
+		state := check_x.Evaluator{Warning: warnThreshold, Critical: critThreshold}.Evaluate(scalarValue)
 
 		resultAsString := strconv.FormatFloat(scalarValue, 'f', -1, 64)
 		if alias == "" {
-			check_x.Exit(state, fmt.Sprintf("Query: '%s' returned: '%s'", query, resultAsString))
+			return state, fmt.Sprintf("Query: '%s' returned: '%s'", query, resultAsString), nil
 		} else {
-			check_x.Exit(state, fmt.Sprintf("Alias: '%s' returned: '%s'", alias, resultAsString))
+			return state, fmt.Sprintf("Alias: '%s' returned: '%s'", alias, resultAsString), nil
 		}
 	case model.ValVector:
 		vector := result.(model.Vector)
@@ -70,14 +85,19 @@ func Query(address *url.URL, query, warning, critical, alias, search, replace, e
 			output = fmt.Sprintf("Query '%s' returned no data.", query)
 		}
 		if output != "" {
-			check_x.Exit(emptyQueryStatus, output)
+			return emptyQueryStatus, output, nil
 		}
 		for _, sample := range vector {
-			helper.CheckTimestampFreshness(sample.Timestamp)
+			if err := helper.CheckTimestampFreshness(sample.Timestamp); err != nil {
+				return check_x.Unknown, fmt.Sprintf("Error when checking sample timestamp freshness: %s", err.Error()), err
+			}
 
 			sampleValue := float64(sample.Value)
-			check_x.NewPerformanceData(replaceLabel(model.LabelSet(sample.Metric).String(), re, replace), sampleValue).Warn(warn).Crit(crit)
-			states = append(states, check_x.Evaluator{Warning: warn, Critical: crit}.Evaluate(sampleValue))
+			label := replaceLabel(model.LabelSet(sample.Metric).String(), re, replace)
+			collection.AddPerformanceDataFloat64(label, sampleValue)
+			collection.Warn(label, warnThreshold)
+			collection.Crit(label, critThreshold)
+			states = append(states, check_x.Evaluator{Warning: warnThreshold, Critical: critThreshold}.Evaluate(sampleValue))
 			output += expandAlias(alias, sample.Metric, sampleValue)
 		}
 
@@ -87,19 +107,20 @@ func Query(address *url.URL, query, warning, critical, alias, search, replace, e
 		states := check_x.States{}
 		for _, sampleStream := range matrix {
 			for _, value := range sampleStream.Values {
-				helper.CheckTimestampFreshness(value.Timestamp)
-				states = append(states, check_x.Evaluator{Warning: warn, Critical: crit}.Evaluate(float64(value.Value)))
+				if err := helper.CheckTimestampFreshness(value.Timestamp); err != nil {
+					return check_x.Unknown, fmt.Sprintf("Error when checking value timestamp freshness: %s", err.Error()), err
+				}
+				states = append(states, check_x.Evaluator{Warning: warnThreshold, Critical: critThreshold}.Evaluate(float64(value.Value)))
 			}
 		}
 
 		return evalStates(states, alias, query)
 	default:
-		check_x.Exit(check_x.Unknown, fmt.Sprintf("The query did not return a supported type(scalar, vector, matrix), instead: '%s'. Query: '%s'", result.Type().String(), query))
 
-		return nil
+		err = fmt.Errorf("query did not return a supported type(scalar, vector, matrix), instead: '%s'. Query: '%s'", result.Type().String(), query)
+
+		return check_x.Unknown, fmt.Sprintf("Error when querying prometheus: %s", err.Error()), err
 	}
-
-	return err
 }
 
 func expandAlias(alias string, labels model.Metric, value float64) string {
@@ -130,16 +151,16 @@ func replaceLabel(label string, re *regexp.Regexp, replace string) string {
 	return label
 }
 
-func evalStates(states check_x.States, alias, query string) error {
+func evalStates(states check_x.States, alias, query string) (check_x.State, string, error) {
 	state, err := states.GetWorst()
+
 	if err != nil {
-		return err
-	}
-	if alias == "" {
-		check_x.Exit(*state, fmt.Sprintf("Query: '%s'", query))
-	} else {
-		check_x.Exit(*state, alias)
+		return *state, fmt.Sprintf("Error when picking the worst state out of many states: %s", err.Error()), err
 	}
 
-	return nil
+	if alias == "" {
+		return *state, fmt.Sprintf("Query: '%s'", query), nil
+	} else {
+		return *state, alias, nil
+	}
 }

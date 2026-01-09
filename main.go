@@ -7,6 +7,7 @@ import (
 )
 
 func main() {
+	return_code := checker.CheckMain(os.Args)
 
-	checker.Check(os.Args)
+	os.Exit(return_code)
 }
