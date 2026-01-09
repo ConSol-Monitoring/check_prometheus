@@ -17,7 +17,7 @@ import (
 )
 
 // Query allows the user to test data in the prometheus server
-func Query(address *url.URL, query, warning, critical, alias, search, replace, emptyQueryMessage string, emptyQueryStatus check_x.State, collection *check_x.PerformanceDataCollection) (check_x.State, string, error) {
+func Query(ctx context.Context, address *url.URL, query, warning, critical, alias, search, replace, emptyQueryMessage string, emptyQueryStatus check_x.State, collection *check_x.PerformanceDataCollection) (check_x.State, string, error) {
 	if address == nil {
 		err := fmt.Errorf("address to query is null")
 		return check_x.Unknown, fmt.Sprintf("Error: %s", err.Error()), err
@@ -51,7 +51,7 @@ func Query(address *url.URL, query, warning, critical, alias, search, replace, e
 		return check_x.Unknown, fmt.Sprintf("Error creating apiClient: %s", err.Error()), err
 	}
 
-	result, _, err := apiClient.Query(context.TODO(), query, time.Now())
+	result, _, err := apiClient.Query(ctx, query, time.Now())
 	if err != nil {
 		return check_x.Unknown, fmt.Sprintf("Error when querying: %s", err.Error()), err
 	}

@@ -1,6 +1,7 @@
 package helper
 
 import (
+	"context"
 	"crypto/tls"
 	"fmt"
 	"io"
@@ -93,7 +94,7 @@ func NewAPIClientV1(address *url.URL) (v1.API, error) {
 }
 
 // DoAPIRequest does the http handling for an api request
-func DoAPIRequest(url *url.URL) ([]byte, error) {
+func DoAPIRequest(ctx context.Context, url *url.URL) ([]byte, error) {
 	transport := http.DefaultTransport.(*http.Transport).Clone()
 	transport.TLSClientConfig = &tls.Config{InsecureSkipVerify: InsecureSkipVerify}
 
@@ -107,7 +108,13 @@ func DoAPIRequest(url *url.URL) ([]byte, error) {
 		httpClient.Jar.SetCookies(url, Cookies)
 	}
 
-	resp, err := httpClient.Get(url.String())
+	// Create request with context to support timeout
+	req, err := http.NewRequestWithContext(ctx, "GET", url.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	resp, err := httpClient.Do(req)
 	if err != nil {
 		return nil, err
 	}

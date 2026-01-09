@@ -41,12 +41,6 @@ var (
 	emptyQueryStatus    check_x.State
 )
 
-func startTimeout() {
-	if timeout != 0 {
-		check_x.StartTimeout(time.Duration(timeout) * time.Second)
-	}
-}
-
 // This function is intended to be used for single-use cli mode
 // It will be called from main executable function as it returns int
 func CheckMain(args []string) int {
@@ -71,10 +65,10 @@ func GenerateStdout(state check_x.State, msg string, collection *check_x.Perform
 // It can be used as a library import
 func Check(args []string) (check_x.State, string, *check_x.PerformanceDataCollection, error) {
 
-	var state check_x.State
-	var msg string
+	state := check_x.Unknown
+	msg := "Cli action did not run yet"
 	var collection = check_x.NewPerformanceDataCollection()
-	var err error
+	var err error = nil
 
 	cmd := &cli.Command{
 		Name:    "check_prometheus",
@@ -118,8 +112,15 @@ func Check(args []string) (check_x.State, string, *check_x.PerformanceDataCollec
 						Usage:       "Returns the build informations",
 						Description: `This check requires that the prometheus server itself is listed as target. Following query will be used: 'prometheus_build_info{job="prometheus"}'`,
 						Action: func(ctx context.Context, cmd *cli.Command) error {
-							startTimeout()
-							state, msg, err = mode.Ping(address, &collection)
+							var ctxPing context.Context
+							var ctxPingCancel context.CancelFunc
+							if timeout == 0 {
+								ctxPing = context.WithoutCancel(ctx)
+							} else {
+								ctxPing, ctxPingCancel = context.WithTimeout(ctx, time.Duration(timeout)*time.Second)
+								defer ctxPingCancel()
+							}
+							state, msg, err = mode.Ping(ctxPing, address, &collection)
 							return err
 						},
 						Flags: []cli.Flag{
@@ -193,9 +194,17 @@ func Check(args []string) (check_x.State, string, *check_x.PerformanceDataCollec
 											--> UNKNOWN - The given States do not contain an State
 
 										`,
-						Action: func(c context.Context, cmd *cli.Command) error {
-							startTimeout()
-							state, msg, err = mode.Query(address, queryDecoded, warning, critical, alias, search, replace, emptyQueryMessage, emptyQueryStatus, &collection)
+						Action: func(ctx context.Context, cmd *cli.Command) error {
+							var ctxQuery context.Context
+							var ctxQueryCancel context.CancelFunc
+							if timeout == 0 {
+								ctxQuery = context.WithoutCancel(ctx)
+							} else {
+								ctxQuery, ctxQueryCancel = context.WithTimeout(ctx, time.Duration(timeout)*time.Second)
+								defer ctxQueryCancel()
+							}
+
+							state, msg, err = mode.Query(ctxQuery, address, queryDecoded, warning, critical, alias, search, replace, emptyQueryMessage, emptyQueryStatus, &collection)
 							return err
 						},
 						Flags: []cli.Flag{
@@ -360,9 +369,17 @@ func Check(args []string) (check_x.State, string, *check_x.PerformanceDataCollec
 						HideHelp:    false,
 						Usage:       "Returns the health of the targets",
 						Description: `The warning and critical thresholds are appied on the health_rate. The health_rate is calculted: sum(healthy) / sum(targets).`,
-						Action: func(c context.Context, cmd *cli.Command) error {
-							startTimeout()
-							state, msg, err = mode.TargetsHealth(address, label, warning, critical, &collection)
+						Action: func(ctx context.Context, cmd *cli.Command) error {
+							var ctxTargetsHealth context.Context
+							var ctxTargetsHealthCancel context.CancelFunc
+							if timeout == 0 {
+								ctxTargetsHealth = context.WithoutCancel(ctx)
+							} else {
+								ctxTargetsHealth, ctxTargetsHealthCancel = context.WithTimeout(ctx, time.Duration(timeout)*time.Second)
+								defer ctxTargetsHealthCancel()
+							}
+
+							state, msg, err = mode.TargetsHealth(ctxTargetsHealth, address, label, warning, critical, &collection)
 							return err
 						},
 						Flags: []cli.Flag{

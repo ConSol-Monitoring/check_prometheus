@@ -1,6 +1,7 @@
 package mode
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"net/url"
@@ -36,13 +37,13 @@ type targets struct {
 	} `json:"data"`
 }
 
-func getTargets(address *url.URL) (*targets, error) {
-	u, err := url.Parse(address.String())
+func getTargets(ctx context.Context, address *url.URL) (*targets, error) {
+	url, err := url.Parse(address.String())
 	if err != nil {
 		return nil, err
 	}
-	u.Path = path.Join(u.Path, "/api/v1/targets")
-	jsonBytes, err := helper.DoAPIRequest(u)
+	url.Path = path.Join(url.Path, "/api/v1/targets")
+	jsonBytes, err := helper.DoAPIRequest(ctx, url)
 	if err != nil {
 		return nil, err
 	}
@@ -55,7 +56,7 @@ func getTargets(address *url.URL) (*targets, error) {
 }
 
 // TargetsHealth tests the health of the targets
-func TargetsHealth(address *url.URL, label, warning, critical string, collection *check_x.PerformanceDataCollection) (check_x.State, string, error) {
+func TargetsHealth(ctx context.Context, address *url.URL, label, warning, critical string, collection *check_x.PerformanceDataCollection) (check_x.State, string, error) {
 	if address == nil {
 		err := fmt.Errorf("address to query is null")
 		return check_x.Unknown, fmt.Sprintf("Error: %s", err.Error()), err
@@ -76,7 +77,7 @@ func TargetsHealth(address *url.URL, label, warning, critical string, collection
 		return check_x.Unknown, fmt.Sprintf("Error creating critThreshold from '%s' : %s", critical, err.Error()), err
 	}
 
-	targets, err := getTargets(address)
+	targets, err := getTargets(ctx, address)
 	if err != nil {
 		return check_x.Unknown, fmt.Sprintf("Error getting targets out of address: %s : %s", address.String(), err.Error()), err
 	}

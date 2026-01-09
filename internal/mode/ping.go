@@ -26,7 +26,7 @@ type buildInfo struct {
 }
 
 // Ping will fetch build information from the prometheus server
-func Ping(address *url.URL, collection *check_x.PerformanceDataCollection) (check_x.State, string, error) {
+func Ping(ctx context.Context, address *url.URL, collection *check_x.PerformanceDataCollection) (check_x.State, string, error) {
 	if address == nil {
 		err := fmt.Errorf("address to query is null")
 		return check_x.Unknown, fmt.Sprintf("Error: %s", err.Error()), err
@@ -44,7 +44,7 @@ func Ping(address *url.URL, collection *check_x.PerformanceDataCollection) (chec
 
 	query := `prometheus_build_info{job="prometheus"}`
 	startTime := time.Now()
-	result, _, err := apiClient.Query(context.TODO(), query, time.Now())
+	result, _, err := apiClient.Query(ctx, query, time.Now())
 	endTime := time.Now()
 	if err != nil {
 		return check_x.Unknown, fmt.Sprintf("Error when querying API: %s", err.Error()), err
