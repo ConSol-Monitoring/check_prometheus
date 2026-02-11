@@ -5,8 +5,8 @@ go 1.25
 require (
 	github.com/consol-monitoring/check_x v0.0.0-20260108170459-f7c19720a9ad
 	github.com/prometheus/client_golang v1.23.2
-	github.com/prometheus/common v0.67.4
-	github.com/urfave/cli/v3 v3.6.1
+	github.com/prometheus/common v0.67.5
+	github.com/urfave/cli/v3 v3.6.2
 )
 
 require (
@@ -16,5 +16,5 @@ require (
 	github.com/modern-go/reflect2 v1.0.2 // indirect
 	github.com/prometheus/client_model v0.6.2 // indirect
 	go.yaml.in/yaml/v2 v2.4.3 // indirect
-	google.golang.org/protobuf v1.36.10 // indirect
+	google.golang.org/protobuf v1.36.11 // indirect
 )

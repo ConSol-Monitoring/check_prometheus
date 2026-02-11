@@ -1,3 +1,6 @@
+# next
+- update dependencies
+
 # 0.0.2 - 09.01.2020
 ## Changes:
 - change to ConSol repos

@@ -11,7 +11,6 @@ import (
 
 	"github.com/consol-monitoring/check_prometheus/internal/helper"
 	"github.com/consol-monitoring/check_prometheus/internal/mode"
-
 	"github.com/consol-monitoring/check_x"
 	"github.com/urfave/cli/v3"
 )
@@ -31,7 +30,7 @@ var (
 	critical            string
 	query               string
 	queryDecoded        string
-	queryEncoding       QueryEncodingEnum
+	queryEncoding       QueryEncodingEnum //nolint:unused // only used for validation
 	alias               string
 	search              string
 	replace             string
@@ -44,7 +43,6 @@ var (
 // This function is intended to be used for single-use cli mode
 // It will be called from main executable function as it returns int
 func CheckMain(args []string) int {
-
 	state, msg, collection, _ := Check(args)
 
 	print(GenerateStdout(state, msg, collection))
@@ -64,10 +62,9 @@ func GenerateStdout(state check_x.State, msg string, collection *check_x.Perform
 // This function is indended to parse a check_prometheus cli query and return the state error etc
 // It can be used as a library import
 func Check(args []string) (check_x.State, string, *check_x.PerformanceDataCollection, error) {
-
 	state := check_x.Unknown
 	msg := "Cli action did not run yet"
-	var collection = check_x.NewPerformanceDataCollection()
+	collection := check_x.NewPerformanceDataCollection()
 	var err error = nil
 
 	cmd := &cli.Command{
