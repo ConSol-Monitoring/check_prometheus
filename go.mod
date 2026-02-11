@@ -1,6 +1,6 @@
 module github.com/consol-monitoring/check_prometheus
 
-go 1.25
+go 1.25.7
 
 require (
 	github.com/consol-monitoring/check_x v0.0.0-20260108170459-f7c19720a9ad
