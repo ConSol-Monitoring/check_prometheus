@@ -1,5 +1,6 @@
 # next
 - update dependencies
+- migrate pkg structure so check can be reused as module
 
 # 0.0.2 - 09.01.2020
 ## Changes:
