@@ -124,7 +124,7 @@ func Query(ctx context.Context, address *url.URL, query, warning, critical, alia
 }
 
 func expandAlias(alias string, labels model.Metric, value float64) string {
-	_, err := template.New("Output").Parse(alias)
+	tmpl, err := template.New("Output").Parse(alias)
 	var output string
 	if err != nil {
 		output = alias
@@ -137,7 +137,11 @@ func expandAlias(alias string, labels model.Metric, value float64) string {
 		}
 		labelMap["xvalue"] = fmt.Sprintf("%v", value)
 		var rendered bytes.Buffer
-		output = rendered.String()
+		if err := tmpl.Execute(&rendered, labelMap); err != nil {
+			output = alias
+		} else {
+			output = rendered.String()
+		}
 	}
 
 	return output
