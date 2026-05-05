@@ -92,7 +92,7 @@ build-darwin-aarch64: vendor
 	done
 
 test: vendor
-	$(GO) test -short -v $(TEST_FLAGS) ./pkg/* ./cmd/*
+	$(GO) test -short -v $(TEST_FLAGS) ./pkg/* ./cmd/* ./internal/mode/
 	if grep -Irn TODO: ./cmd/ ./pkg/;  then exit 1; fi
 
 # test with filter
