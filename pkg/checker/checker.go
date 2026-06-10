@@ -45,7 +45,7 @@ var (
 func CheckMain(args []string) int {
 	state, msg, collection, _ := Check(args)
 
-	print(GenerateStdout(state, msg, collection))
+	fmt.Print(GenerateStdout(state, msg, collection))
 
 	return state.Code
 }
