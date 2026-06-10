@@ -70,7 +70,7 @@ func Check(args []string) (check_x.State, string, *check_x.PerformanceDataCollec
 	cmd := &cli.Command{
 		Name:    "check_prometheus",
 		Usage:   "Checks different prometheus stats as well the data itself",
-		Version: "0.0.6",
+		Version: "0.0.7",
 		Flags: []cli.Flag{
 			&cli.Int64Flag{
 				Name:        "timeout",
