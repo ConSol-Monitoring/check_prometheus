@@ -59,7 +59,7 @@ func GenerateStdout(state check_x.State, msg string, collection *check_x.Perform
 	}
 }
 
-// This function is indended to parse a check_prometheus cli query and return the state error etc
+// This function is intended to parse a check_prometheus cli query and return the state error etc
 // It can be used as a library import
 func Check(args []string) (check_x.State, string, *check_x.PerformanceDataCollection, error) {
 	state := check_x.Unknown
@@ -106,7 +106,7 @@ func Check(args []string) (check_x.State, string, *check_x.PerformanceDataCollec
 						Name:        "ping",
 						Aliases:     []string{"p"},
 						HideHelp:    false,
-						Usage:       "Returns the build informations",
+						Usage:       "Returns the build information",
 						Description: `This check requires that the prometheus server itself is listed as target. Following query will be used: 'prometheus_build_info{job="prometheus"}'`,
 						Action: func(ctx context.Context, cmd *cli.Command) error {
 							var ctxPing context.Context
@@ -247,7 +247,7 @@ func Check(args []string) (check_x.State, string, *check_x.PerformanceDataCollec
 							},
 							&cli.StringFlag{
 								Name:        "search",
-								Usage:       "If this variable is set, the given Golang regex will be used to search and replace the result with the 'replace' flag content. This will be appied on the perflabels.",
+								Usage:       "If this variable is set, the given Golang regex will be used to search and replace the result with the 'replace' flag content. This will be applied on the perflabels.",
 								Destination: &search,
 							},
 							&cli.StringFlag{
@@ -365,7 +365,7 @@ func Check(args []string) (check_x.State, string, *check_x.PerformanceDataCollec
 						Name:        "targets_health",
 						HideHelp:    false,
 						Usage:       "Returns the health of the targets",
-						Description: `The warning and critical thresholds are appied on the health_rate. The health_rate is calculted: sum(healthy) / sum(targets).`,
+						Description: `The warning and critical thresholds are applied on the health_rate. The health_rate is calculated: sum(healthy) / sum(targets).`,
 						Action: func(ctx context.Context, cmd *cli.Command) error {
 							var ctxTargetsHealth context.Context
 							var ctxTargetsHealthCancel context.CancelFunc
