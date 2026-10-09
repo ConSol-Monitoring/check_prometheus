@@ -112,12 +112,22 @@ func TargetsHealth(ctx context.Context, address *url.URL, label, warning, critic
 	}
 
 	collection.AddPerformanceDataFloat64("health_rate", healthRate)
-	collection.Warn("health_rate", warnThreshold)
-	collection.Crit("health_rate", critThreshold)
-	collection.Min("health_rate", 0)
-	collection.Max("health_rate", 1)
+	if err := collection.Warn("health_rate", warnThreshold); err != nil {
+		return check_x.Unknown, fmt.Sprintf("Error setting health rate warning threshold: %s", err.Error()), err
+	}
+	if err := collection.Crit("health_rate", critThreshold); err != nil {
+		return check_x.Unknown, fmt.Sprintf("Error setting health rate critical threshold: %s", err.Error()), err
+	}
+	if err := collection.Min("health_rate", 0); err != nil {
+		return check_x.Unknown, fmt.Sprintf("Error setting minimum health rate: %s", err.Error()), err
+	}
+	if err := collection.Max("health_rate", 1); err != nil {
+		return check_x.Unknown, fmt.Sprintf("Error setting maximum health rate: %s", err.Error()), err
+	}
 	collection.AddPerformanceDataFloat64("targets", sumTargets)
-	collection.Min("targets", 0)
+	if err := collection.Min("targets", 0); err != nil {
+		return check_x.Unknown, fmt.Sprintf("Error setting minimum target count: %s", err.Error()), err
+	}
 
 	state := check_x.Evaluator{Warning: warnThreshold, Critical: critThreshold}.Evaluate(healthRate)
 

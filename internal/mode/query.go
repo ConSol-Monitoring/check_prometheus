@@ -63,9 +63,14 @@ func Query(ctx context.Context, address *url.URL, query, warning, critical, alia
 			return check_x.Unknown, fmt.Sprintf("Error when checking scalar timestamp freshness: %s", err.Error()), err
 		}
 
-		collection.AddPerformanceDataFloat64(replaceLabel("scalar", re, replace), scalarValue)
-		collection.Warn("scalar", warnThreshold)
-		collection.Crit("scalar", critThreshold)
+		label := replaceLabel("scalar", re, replace)
+		collection.AddPerformanceDataFloat64(label, scalarValue)
+		if err := collection.Warn(label, warnThreshold); err != nil {
+			return check_x.Unknown, fmt.Sprintf("Error setting warning threshold: %s", err.Error()), err
+		}
+		if err := collection.Crit(label, critThreshold); err != nil {
+			return check_x.Unknown, fmt.Sprintf("Error setting critical threshold: %s", err.Error()), err
+		}
 		state := check_x.Evaluator{Warning: warnThreshold, Critical: critThreshold}.Evaluate(scalarValue)
 
 		resultAsString := strconv.FormatFloat(scalarValue, 'f', -1, 64)
@@ -94,8 +99,12 @@ func Query(ctx context.Context, address *url.URL, query, warning, critical, alia
 			sampleValue := float64(sample.Value)
 			label := replaceLabel(model.LabelSet(sample.Metric).String(), re, replace)
 			collection.AddPerformanceDataFloat64(label, sampleValue)
-			collection.Warn(label, warnThreshold)
-			collection.Crit(label, critThreshold)
+			if err := collection.Warn(label, warnThreshold); err != nil {
+				return check_x.Unknown, fmt.Sprintf("Error setting warning threshold: %s", err.Error()), err
+			}
+			if err := collection.Crit(label, critThreshold); err != nil {
+				return check_x.Unknown, fmt.Sprintf("Error setting critical threshold: %s", err.Error()), err
+			}
 			states = append(states, check_x.Evaluator{Warning: warnThreshold, Critical: critThreshold}.Evaluate(sampleValue))
 			output += expandAlias(alias, sample.Metric, sampleValue)
 		}

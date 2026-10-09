@@ -69,8 +69,12 @@ func Ping(ctx context.Context, address *url.URL, collection *check_x.Performance
 		return check_x.Unknown, fmt.Sprintf("Error when unmarshalling json of first sample in the vector: %s", err.Error()), err
 	}
 	collection.AddPerformanceDataFloat64("duration", endTime.Sub(startTime).Seconds())
-	collection.Unit("duration", "s")
-	collection.Min("duration", 0)
+	if err := collection.Unit("duration", "s"); err != nil {
+		return check_x.Unknown, fmt.Sprintf("Error setting duration unit: %s", err.Error()), err
+	}
+	if err := collection.Min("duration", 0); err != nil {
+		return check_x.Unknown, fmt.Sprintf("Error setting minimum duration: %s", err.Error()), err
+	}
 
 	return check_x.OK, fmt.Sprintf("Version: %s, Instance %s", dat.Metric.Version, dat.Metric.Instance), nil
 }
