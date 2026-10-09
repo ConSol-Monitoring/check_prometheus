@@ -13,12 +13,16 @@ linters:
     lll:
       line-length: 200
   exclusions:
+    warn-unused: true
     generated: lax
     presets:
       - comments
       - common-false-positives
       - legacy
       - std-error-handling
+issues:
+  max-issues-per-linter: 0
+  max-same-issues: 0
 formatters:
   enable:
     - gofmt

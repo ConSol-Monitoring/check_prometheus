@@ -74,4 +74,3 @@ func TestExpandAlias(t *testing.T) {
 		})
 	}
 }
-

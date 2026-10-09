@@ -9,7 +9,6 @@ import (
 	"time"
 
 	"github.com/consol-monitoring/check_prometheus/internal/helper"
-
 	"github.com/consol-monitoring/check_x"
 )
 

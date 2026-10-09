@@ -18,6 +18,7 @@ REVISION:=$(shell printf "%04d" $$( git rev-list --all --count))
 TOOLSFOLDER=$(shell pwd)/tools
 export GOBIN := $(TOOLSFOLDER)
 export PATH := $(GOBIN):$(PATH)
+GOLANG_CI_OPTIONS=--show-stats=0 --uniq-by-line=0 --timeout=5m
 
 BUILD_FLAGS=-ldflags "-s -w -X main.Build=$(BUILD) -X main.Revision=$(REVISION)"
 TEST_FLAGS=-timeout=5m $(BUILD_FLAGS)
@@ -222,12 +223,12 @@ clean:
 	rm -rf $(TOOLSFOLDER)
 
 GOVET=$(GO) vet -all
-SRCFOLDER=./cmd/. ./pkg/. ./buildtools/.
+SRCFOLDER=./cmd/. ./pkg/. ./internal/. ./buildtools/.
 fmt: tools
 	set -e; for CMD in $(CMDS); do \
 		$(GOVET) ./cmd/$$CMD; \
 	done
-	set -e; for dir in $(shell ls -d1 pkg/*); do \
+	set -e; for dir in $(shell ls -d1 pkg/* internal/*); do \
 		$(GOVET) ./$$dir; \
 	done
 	gofmt -w -s $(SRCFOLDER)
@@ -248,11 +249,10 @@ golangci: tools
 	# golangci combines a few static code analyzer
 	# See https://github.com/golangci/golangci-lint
 	#
-	@set -e; for dir in $$(ls -1d pkg/* cmd); do \
-		echo $$dir; \
-		echo "  - GOOS=linux"; \
-		( cd $$dir && GOOS=linux golangci-lint run --timeout=5m ./... ); \
-	done
+	@which golangci-lint
+	@golangci-lint version
+	@echo "  - GOOS=linux"; \
+	GOOS=linux CGO_ENABLED=0 golangci-lint run $(GOLANG_CI_OPTIONS) pkg/... internal/... cmd/...
 
 govulncheck: tools
 	govulncheck ./...

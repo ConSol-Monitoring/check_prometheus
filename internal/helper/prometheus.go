@@ -85,7 +85,6 @@ func NewAPIClientV1(address *url.URL) (v1.API, error) {
 		Address: address.String(),
 		Client:  httpClient,
 	})
-
 	if err != nil {
 		return nil, err
 	}

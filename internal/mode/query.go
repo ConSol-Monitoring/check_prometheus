@@ -11,7 +11,6 @@ import (
 	"time"
 
 	"github.com/consol-monitoring/check_prometheus/internal/helper"
-
 	"github.com/consol-monitoring/check_x"
 	"github.com/prometheus/common/model"
 )
@@ -131,8 +130,8 @@ func expandAlias(alias string, labels model.Metric, value float64) string {
 	} else {
 		labelMap := make(map[string]string)
 		for label, value := range labels {
-			var l = fmt.Sprintf("%v", label)
-			var v = fmt.Sprintf("%v", value)
+			l := fmt.Sprintf("%v", label)
+			v := fmt.Sprintf("%v", value)
 			labelMap[l] = v
 		}
 		labelMap["xvalue"] = fmt.Sprintf("%v", value)
@@ -157,7 +156,6 @@ func replaceLabel(label string, re *regexp.Regexp, replace string) string {
 
 func evalStates(states check_x.States, alias, query string) (check_x.State, string, error) {
 	state, err := states.GetWorst()
-
 	if err != nil {
 		return *state, fmt.Sprintf("Error when picking the worst state out of many states: %s", err.Error()), err
 	}
