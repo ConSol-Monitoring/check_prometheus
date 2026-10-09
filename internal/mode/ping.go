@@ -44,7 +44,7 @@ func Ping(ctx context.Context, address *url.URL, collection *check_x.Performance
 
 	query := `prometheus_build_info{job="prometheus"}`
 	startTime := time.Now()
-	result, _, err := apiClient.Query(ctx, query, time.Now())
+	result, _, _, err := apiClient.Query(ctx, query, time.Now())
 	endTime := time.Now()
 	if err != nil {
 		return check_x.Unknown, fmt.Sprintf("Error when querying API: %s", err.Error()), err

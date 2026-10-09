@@ -51,7 +51,7 @@ func Query(ctx context.Context, address *url.URL, query, warning, critical, alia
 		return check_x.Unknown, fmt.Sprintf("Error creating apiClient: %s", err.Error()), err
 	}
 
-	result, _, err := apiClient.Query(ctx, query, time.Now())
+	result, _, _, err := apiClient.Query(ctx, query, time.Now())
 	if err != nil {
 		return check_x.Unknown, fmt.Sprintf("Error when querying: %s", err.Error()), err
 	}
