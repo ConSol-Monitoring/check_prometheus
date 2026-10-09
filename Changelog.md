@@ -1,4 +1,4 @@
-# next
+# 0.0.8 - 09.10.2026
 - update dependencies
 
 # 0.0.7 - 10.06.2026
