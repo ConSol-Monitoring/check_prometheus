@@ -1,10 +1,13 @@
+# check_prometheus
+
 [![License: GPL v3](https://img.shields.io/badge/License-GPL%20v3-blue.svg)](http://www.gnu.org/licenses/gpl-3.0)
 
-# check_prometheus
 Monitoring Plugin to check the health of a Prometheus server and its data
 
 ## Usage
+
 ### Global Options
+
 ```
 .\check_prometheus -h
 NAME:
