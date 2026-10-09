@@ -62,6 +62,50 @@ build: vendor
 		( cd ./cmd/$$CMD && $(GO) build $(BUILD_FLAGS) -o ../../$$CMD ) ; \
 	done
 
+.PHONY: update-readme
+update-readme: build
+	@set -eu; \
+	help_file=$$(mktemp); \
+	readme_tmp=; \
+	trap 'rm -f "$$help_file" "$$readme_tmp"' EXIT; \
+	update_help() { \
+		heading=$$1; \
+		shift; \
+		status=0; \
+		"$$@" > "$$help_file" 2>&1 || status=$$?; \
+		if [ "$$status" -ne 0 ] && [ "$$status" -ne 3 ]; then \
+			cat "$$help_file" >&2; \
+			echo "help command failed with status $$status" >&2; \
+			return "$$status"; \
+		fi; \
+		sed -i -e '/^UNKNOWN - Cli action did not run yet$$/d' -e 's/[[:space:]]*$$//' "$$help_file"; \
+		readme_tmp=$$(mktemp README.md.XXXXXX); \
+		if ! awk -v heading="$$heading" -v help_file="$$help_file" \
+			'$$0 == heading { found++; active = 1; print; next } \
+			active && $$0 ~ /^### / { bad = 1; exit 1 } \
+			active && !inside && $$0 == "```" { \
+				print; \
+				if (heading == "### Global Options") print "./check_prometheus -h"; \
+				else if (heading == "### Command options") print "./check_prometheus mode -h"; \
+				else print "./check_prometheus mode query -h"; \
+				while ((getline line < help_file) > 0) print line; \
+				close(help_file); inside = 1; next; \
+			} \
+			inside && $$0 == "```" { print; inside = 0; active = 0; next } \
+			inside { next } \
+			{ print } \
+			END { if (bad || found != 1 || active || inside) exit 1 }' \
+			README.md > "$$readme_tmp"; then \
+			rm -f "$$readme_tmp"; \
+			echo "Could not update README help under $$heading" >&2; \
+			return 1; \
+		fi; \
+		mv "$$readme_tmp" README.md; \
+	}; \
+	update_help "### Global Options" ./check_prometheus -h; \
+	update_help "### Command options" ./check_prometheus mode -h; \
+	update_help "### Subcommand options example" ./check_prometheus mode query -h
+
 # run build watch, ex. with tracing: make build-watch -- -vv
 build-watch: vendor tools
 	set -x ; ls pkg/*/*.go cmd/*/*.go | entr -sr "$(MAKE) build && ./check_prometheus $(filter-out $@,$(MAKECMDGOALS)) $(shell echo $(filter-out --,$(MAKEFLAGS)) | tac -s " ")"
@@ -220,6 +264,8 @@ version:
 		if [ "v$$OLDVERSION" = "v$$NEWVERSION" -o "x$$NEWVERSION" = "x" ]; then echo "no changes"; exit 1; fi; \
 		sed -i -e 's/Version: *"'$$OLDVERSION'",/Version: "'$$NEWVERSION'",/g' pkg/checker/checker.go
 	$(MAKE) fmt
+	$(MAKE) build
+	$(MAKE) update-readme
 
 check_prometheus: build
 
