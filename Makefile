@@ -214,11 +214,12 @@ govulncheck: tools
 	govulncheck ./...
 
 version:
-	OLDVERSION="$(shell grep "VERSION =" ./pkg/checker/check.go | awk '{print $$4}' | tr -d '"')"; \
+	OLDVERSION="$(shell grep "Version: " ./pkg/checker/checker.go | awk '{print $$2}' | tr -d '"' | tr -d ',')"; \
 	NEWVERSION=$$(dialog --stdout --inputbox "New Version:" 0 0 "v$$OLDVERSION") && \
 		NEWVERSION=$$(echo $$NEWVERSION | sed "s/^v//g"); \
 		if [ "v$$OLDVERSION" = "v$$NEWVERSION" -o "x$$NEWVERSION" = "x" ]; then echo "no changes"; exit 1; fi; \
-		sed -i -e 's/VERSION =.*/VERSION = "'$$NEWVERSION'"/g' pkg/checker/checker.go
+		sed -i -e 's/Version: *"'$$OLDVERSION'",/Version: "'$$NEWVERSION'",/g' pkg/checker/checker.go
+	$(MAKE) fmt
 
 check_prometheus: build
 
