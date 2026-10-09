@@ -7,7 +7,7 @@ GOVERSION:=$(shell \
     go version | \
     awk -F'go| ' '{ split($$5, a, /\./); printf ("%04d%04d", a[1], a[2]); exit; }' \
 )
-# also update go.mod files when changing minumum version
+# also update go.mod files when changing minimum version
 # find . -name go.mod
 MINGOVERSION:=00010025
 MINGOVERSIONSTR:=1.25
@@ -214,7 +214,7 @@ govulncheck: tools
 	govulncheck ./...
 
 version:
-	OLDVERSION="$(shell grep "VERSION =" ./pkg/$(PROJECT)/check.go | awk '{print $$4}' | tr -d '"')"; \
+	OLDVERSION="$(shell grep "VERSION =" ./pkg/checker/check.go | awk '{print $$4}' | tr -d '"')"; \
 	NEWVERSION=$$(dialog --stdout --inputbox "New Version:" 0 0 "v$$OLDVERSION") && \
 		NEWVERSION=$$(echo $$NEWVERSION | sed "s/^v//g"); \
 		if [ "v$$OLDVERSION" = "v$$NEWVERSION" -o "x$$NEWVERSION" = "x" ]; then echo "no changes"; exit 1; fi; \
