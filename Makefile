@@ -38,12 +38,12 @@ updatedeps: versioncheck
 	$(MAKE) clean
 	$(MAKE) tools
 	$(GO) mod download
-	GOPROXY=direct $(GO) get -t -u ./pkg/* ./cmd/*
+	GOPROXY=direct $(GO) get -t -u ./pkg/* ./internal/* ./cmd/*
 	$(GO) mod download
 	$(MAKE) cleandeps
 
 cleandeps:
-	set -e; for dir in $(shell ls -d1 pkg/* cmd/*); do \
+	set -e; for dir in $(shell ls -d1 pkg/* internal/* cmd/*); do \
 		( cd ./$$dir && $(GO) mod tidy ); \
 	done
 	$(GO) mod tidy
@@ -109,7 +109,7 @@ update-readme: build
 
 # run build watch, ex. with tracing: make build-watch -- -vv
 build-watch: vendor tools
-	set -x ; ls pkg/*/*.go cmd/*/*.go | entr -sr "$(MAKE) build && ./check_prometheus $(filter-out $@,$(MAKECMDGOALS)) $(shell echo $(filter-out --,$(MAKEFLAGS)) | tac -s " ")"
+	set -x ; ls pkg/*/*.go internal/*/*.go cmd/*/*.go | entr -sr "$(MAKE) build && ./check_prometheus $(filter-out $@,$(MAKECMDGOALS)) $(shell echo $(filter-out --,$(MAKEFLAGS)) | tac -s " ")"
 
 build-linux-amd64: vendor
 	set -e; for CMD in $(CMDS); do \
@@ -137,29 +137,29 @@ build-darwin-aarch64: vendor
 	done
 
 test: vendor
-	$(GO) test -short -v $(TEST_FLAGS) ./pkg/* ./cmd/* ./internal/mode/
-	if grep -Irn TODO: ./cmd/ ./pkg/;  then exit 1; fi
+	$(GO) test -short -v $(TEST_FLAGS) ./pkg/* ./cmd/* ./internal/*
+	if grep -Irn TODO: ./cmd/ ./pkg/ ./internal/*;  then exit 1; fi
 
 # test with filter
 testf: vendor
-	$(GO) test -short -v $(TEST_FLAGS) ./pkg/* ./cmd/* -run "$(filter-out $@,$(MAKECMDGOALS))" 2>&1 | grep -v "no test files" | grep -v "no tests to run" | grep -v "^PASS"
+	$(GO) test -short -v $(TEST_FLAGS) ./pkg/* ./cmd/* ./internal/* -run "$(filter-out $@,$(MAKECMDGOALS))" 2>&1 | grep -v "no test files" | grep -v "no tests to run" | grep -v "^PASS"
 
 longtest: vendor
-	$(GO) test -v $(TEST_FLAGS) ./pkg/* ./cmd/*
+	$(GO) test -v $(TEST_FLAGS) ./pkg/* ./cmd/* ./internal/*
 
 citest: tools vendor
 	#
 	# Checking gofmt errors
 	#
-	if [ $$(gofmt -s -l ./cmd/ ./pkg/ | wc -l) -gt 0 ]; then \
+	if [ $$(gofmt -s -l ./cmd/ ./pkg/ ./internal/ | wc -l) -gt 0 ]; then \
 		echo "found format errors in these files:"; \
-		gofmt -s -l ./cmd/ ./pkg/ ; \
+		gofmt -s -l ./cmd/ ./pkg/ ./internal/ ; \
 		exit 1; \
 	fi
 	#
 	# Checking TODO items
 	#
-	if grep -Irn TODO: ./cmd/ ./pkg/ ; then exit 1; fi
+	if grep -Irn TODO: ./cmd/ ./pkg/ ./internal/ ; then exit 1; fi
 	#
 	# Run other subtests
 	#
@@ -191,18 +191,18 @@ citest: tools vendor
 	#
 
 benchmark:
-	$(GO) test $(TEST_FLAGS) -v -bench=B\* -run=^$$ -benchmem ./pkg/*
+	$(GO) test $(TEST_FLAGS) -v -bench=B\* -run=^$$ -benchmem ./pkg/* ./internal/*
 
 racetest:
-	$(GO) test -race -short $(TEST_FLAGS) -coverprofile=coverage.txt -covermode=atomic -gcflags "-d=checkptr=0" ./pkg/*
+	$(GO) test -race -short $(TEST_FLAGS) -coverprofile=coverage.txt -covermode=atomic -gcflags "-d=checkptr=0" ./pkg/* ./internal/*
 
 covertest:
-	$(GO) test -v $(TEST_FLAGS) -coverprofile=cover.out ./pkg/*
+	$(GO) test -v $(TEST_FLAGS) -coverprofile=cover.out ./pkg/* ./internal/*
 	$(GO) tool cover -func=cover.out
 	$(GO) tool cover -html=cover.out -o coverage.html
 
 coverweb:
-	$(GO) test -v $(TEST_FLAGS) -coverprofile=cover.out ./pkg/*
+	$(GO) test -v $(TEST_FLAGS) -coverprofile=cover.out ./pkg/* ./internal/*
 	$(GO) tool cover -html=cover.out
 
 clean:
